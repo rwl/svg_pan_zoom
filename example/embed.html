@@ -3,7 +3,7 @@
   <head>
     <title>embed</title>
     <style>
-embed {
+#container {
   width: 500px;
   height: 500px;
   border:1px solid black;
@@ -12,13 +12,27 @@ embed {
   </head>
   <body>
     <h1>Demo for svg-pan-zoom: SVG in HTML 'embed' element</h1>
-    <embed id="demo-tiger" type="image/svg+xml" src="tiger.svg"/>
+    <!--<embed id="demo-tiger" type="image/svg+xml" src="tiger.svg"/>-->
+    <div id="container"></div>
     <script type="application/dart">
+import 'dart:html';
 import 'package:svg_pan_zoom/svg_pan_zoom.dart';
 
 main() {
-  new SvgPanZoom.selector('#demo-tiger', new SvgPanZoomOptions()
+  var request = new HttpRequest()
+    ..open('GET', 'tiger.svg', async: false)
+    ..send();
+  final doc = new DomParser().parseFromString(request.responseText, 'text/xml');
+  var svgNode = document.importNode(doc.documentElement, true) as Element;
+  svgNode.style.width = 'inherit';
+  svgNode.style.height = 'inherit';
+  document.querySelector('#container').append(svgNode);
+
+  svgPanZoom(svgNode, new SvgPanZoomOptions()
     ..zoomEnabled = true
+    ..zoomScaleSensitivity = 0.02
+    ..minZoom = 1
+    ..maxZoom = 3
     ..controlIconsEnabled = true);
 }
     </script>

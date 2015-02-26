@@ -77,7 +77,7 @@ class ShadowViewport {
     var svgViewBox = this.options.svg.getAttribute('viewBox');
 
     if (svgViewBox != null) {
-      var viewBoxValues = svgViewBox.split(' ').map(double.parse);
+      var viewBoxValues = svgViewBox.split(' ').map(double.parse).toList();
 
       // Cache viewbox x and y offset
       var /*this.viewBox.*/x = viewBoxValues[0];
