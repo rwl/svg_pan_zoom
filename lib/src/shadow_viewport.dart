@@ -11,7 +11,7 @@ library svg_pan_zoom.internal.shadow_viewport;
 import 'dart:math' show Rectangle;
 import 'dart:math' as math;
 import 'dart:svg';
-import 'dart:html' show window;
+//import 'dart:html' show window;
 import 'svg_utils.dart' as svgUtils;
 import 'utils.dart' as utils;
 
@@ -23,12 +23,20 @@ class State {
   }
 }
 
+typedef BeforeZoomFn(num scale, num ctm);
+typedef OnZoomFn(num scale);
+typedef BeforePanFn(math.Point oldPan, math.Point newPan);
+typedef OnPanFn(math.Point newPan);
+
 class ViewportOptions {
   SvgSvgElement svg;
   num height, width;
   bool fit, center;
   String refreshRate;
-  Function beforeZoom, onZoom, beforePan, onPan;
+  BeforeZoomFn beforeZoom;
+  OnZoomFn onZoom;
+  BeforePanFn beforePan;
+  OnPanFn onPan;
 }
 
 class ShadowViewport {
@@ -68,7 +76,7 @@ class ShadowViewport {
   void cacheViewBox() {
     var svgViewBox = this.options.svg.getAttribute('viewBox');
 
-    if (svgViewBox) {
+    if (svgViewBox != null) {
       var viewBoxValues = svgViewBox.split(' ').map(double.parse);
 
       // Cache viewbox x and y offset
@@ -301,14 +309,14 @@ class ShadowViewport {
       pendingUpdate = true;
 
       // Throttle next update
-      requestAnimationFrame(window, updateCTMCached);
+      requestAnimationFrame(/*window, */updateCTMCached);
     }
   }
 
   SvgElement defs;
 
   /// Update viewport CTM with cached CTM.
-  updateCTM() {
+  updateCTM(_) {
     // Updates SVG element
     svgUtils.setCTM(this.viewport, getCTM(), defs);
 

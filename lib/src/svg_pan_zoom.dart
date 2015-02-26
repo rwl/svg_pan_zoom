@@ -58,10 +58,10 @@ class SvgPanZoomOptions {
   /// Maximum number of frames per second (altering SVG's viewport)
   var refreshRate = 'auto';
 
-  var beforeZoom = null;
-  var onZoom = null;
-  var beforePan = null;
-  var onPan = null;
+  BeforeZoomFn beforeZoom = null;
+  OnZoomFn onZoom = null;
+  BeforePanFn beforePan = null;
+  OnPanFn onPan = null;
   var customEventsHandler = null;
 }
 
@@ -354,10 +354,12 @@ class SvgPanZoom {
     }
 
     // If not a SVGPoint but has x and y than create a SVGPoint
-    if (point is! Point && point.contains('x') && point.contains('y')) {
+    if (point is math.Point) {
+      point = svgUtils.createSVGPoint(svg, point.x, point.y);
+    } else if (point is Map && point.containsKey('x') && point.containsKey('y')) {
       point = svgUtils.createSVGPoint(svg, point['x'], point['y']);
     } else {
-      throw new Exception('Given point is invalid');
+      throw new Exception('Given point is invalid: $point');
       return;
     }
 
@@ -490,8 +492,8 @@ class SvgPanZoom {
   /// Adjust viewport size (only) so it will fit in SVG.
   /// Does not center image.
   void fit() {
-    var viewBox = this.viewport.getViewBox();
-    var newScale = math.min(width/(viewBox.width - viewBox.x), height/(viewBox.height - viewBox.y));
+    Rectangle viewBox = viewport.getViewBox();
+    var newScale = math.min(width/(viewBox.width - viewBox.left), height/(viewBox.height - viewBox.top));
 
     zoom(newScale, true);
   }
@@ -499,9 +501,9 @@ class SvgPanZoom {
   /// Adjust viewport pan (only) so it will be centered in SVG.
   /// Does not zoom/fit image.
   void center() {
-    var viewBox = viewport.getViewBox();
-    var offsetX = (width - (viewBox.width + viewBox.x) * getZoom()) * 0.5;
-    var offsetY = (height - (viewBox.height + viewBox.y) * getZoom()) * 0.5;
+    Rectangle viewBox = viewport.getViewBox();
+    var offsetX = (width - (viewBox.width + viewBox.left) * getZoom()) * 0.5;
+    var offsetY = (height - (viewBox.height + viewBox.top) * getZoom()) * 0.5;
 
     getPublicInstance().pan(new math.Point(offsetX, offsetY));
   }
@@ -514,7 +516,7 @@ class SvgPanZoom {
 
   /// Pan to a rendered position
   void pan(math.Point point) {
-    var viewportCTM = this.viewport.getCTM();
+    var viewportCTM = viewport.getCTM();
     viewportCTM.e = point.x;
     viewportCTM.f = point.y;
     viewport.setCTM(viewportCTM);
@@ -522,7 +524,7 @@ class SvgPanZoom {
 
   /// Relatively pan the graph by a specified rendered position vector.
   void panBy(math.Point point) {
-    var viewportCTM = this.viewport.getCTM();
+    var viewportCTM = viewport.getCTM();
     viewportCTM.e += point.x;
     viewportCTM.f += point.y;
     viewport.setCTM(viewportCTM);
@@ -845,7 +847,7 @@ class PublicSvgPanZoom {
     return spz.pi;
   }
 
-  zoomAtPointBy(scale, point) {
+  zoomAtPointBy(num scale, math.Point point) {
     spz.publicZoomAtPoint(scale, point, false);
     return spz.pi;
   }

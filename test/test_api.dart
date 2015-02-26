@@ -201,7 +201,7 @@ main() {
 
       var initialPan = instance.getPan();
 
-      instance.setBeforePan((point) {
+      instance.setBeforePan((point, _) {
         expect(point, equals(initialPan));
       });
 
@@ -377,7 +377,7 @@ main() {
 
       var initialZoom = instance.getZoom();
 
-      instance.setBeforeZoom((scale) {
+      instance.setBeforeZoom((scale, _) {
         expect(scale, closeTo(initialZoom, delta));
       });
 
