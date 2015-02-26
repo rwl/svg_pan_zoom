@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>embed</title>
+    <style>
+embed {
+  width: 500px;
+  height: 500px;
+  border:1px solid black;
+}
+    </style>
+  </head>
+  <body>
+    <h1>Demo for svg-pan-zoom: SVG in HTML 'embed' element</h1>
+    <embed id="demo-tiger" type="image/svg+xml" src="tiger.svg"/>
+    <script type="application/dart">
+import 'package:svg_pan_zoom/svg_pan_zoom.dart';
+
+main() {
+  new SvgPanZoom.selector('#demo-tiger', new SvgPanZoomOptions()
+    ..zoomEnabled = true
+    ..controlIconsEnabled = true);
+}
+    </script>
+  </body>
+</html>

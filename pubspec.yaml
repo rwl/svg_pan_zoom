@@ -1,0 +1,7 @@
+name: svg_pan_zoom
+description: >
+  Enables panning and zooming of SVG in an HTML document.
+version: 0.0.1
+author: Richard Lincoln <r.w.lincoln@gmail.com>
+dev_dependencies:
+  unittest: any
