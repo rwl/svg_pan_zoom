@@ -1,20 +1,20 @@
 // Copyright (c) 2009-2015 Andrea Leofreddi
 // All rights reserved.
-library svg_pan_zoom.internal.control_icons;
+part of svg_pan_zoom.internal;
 
 //var SvgUtils = require('./svg-utilities');
 
-import 'dart:html';
-import 'dart:svg';
-import 'svg_pan_zoom.dart';
-import 'svg_utils.dart' as svgUtils;
+//import 'dart:html';
+//import 'dart:svg';
+//import 'svg_pan_zoom.dart';
+//import 'svg_utils.dart' as svgUtils;
 
-enable(SvgPanZoom instance) {
+_enableControls(SvgPanZoom instance) {
   // Select (and create if necessary) defs
-  var defs = instance.svg.querySelector('defs');
+  var defs = instance._svg.querySelector('defs');
   if (defs == null) {
     defs = document.createElementNS(svgUtils.svgNS, 'defs');
-    instance.svg.append(defs);
+    instance._svg.append(defs);
   }
 
   // Create style element
@@ -27,7 +27,7 @@ enable(SvgPanZoom instance) {
   // Zoom Group
   var zoomGroup = document.createElementNS(svgUtils.svgNS, 'g');
   zoomGroup.setAttribute('id', 'svg-pan-zoom-controls');
-  zoomGroup.setAttribute('transform', 'translate(${instance.width - 70} ${instance.height - 76}) scale(0.75)');
+  zoomGroup.setAttribute('transform', 'translate(${instance._width - 70} ${instance._height - 76}) scale(0.75)');
   zoomGroup.setAttribute('class', 'svg-pan-zoom-control');
 
   // Control elements
@@ -36,19 +36,19 @@ enable(SvgPanZoom instance) {
   zoomGroup.append(_createZoomOut(instance));
 
   // Finally append created element
-  instance.svg.append(zoomGroup);
+  instance._svg.append(zoomGroup);
 
   // Cache control instance
-  instance.controlIcons = zoomGroup;
+  instance._controlIcons = zoomGroup;
 }
 
-GElement _createZoomIn(instance) {
+GElement _createZoomIn(SvgPanZoom instance) {
   var zoomIn = document.createElementNS(svgUtils.svgNS, 'g');
   zoomIn.setAttribute('id', 'svg-pan-zoom-zoom-in');
   zoomIn.setAttribute('transform', 'translate(30.5 5) scale(0.015)');
   zoomIn.setAttribute('class', 'svg-pan-zoom-control');
-  zoomIn.addEventListener('click', (_) {instance.getPublicInstance().zoomIn();}, false);
-  zoomIn.addEventListener('touchstart', (_) {instance.getPublicInstance().zoomIn();}, false);
+  zoomIn.addEventListener('click', (_) => instance.zoomIn(), false);
+  zoomIn.addEventListener('touchstart', (_) => instance.zoomIn(), false);
 
   // TODO change these background space fillers to rounded rectangles so they look prettier
   var zoomInBackground = document.createElementNS(svgUtils.svgNS, 'rect');
@@ -74,8 +74,8 @@ GElement _createZoomReset(SvgPanZoom instance) {
   resetPanZoomControl.setAttribute('id', 'svg-pan-zoom-reset-pan-zoom');
   resetPanZoomControl.setAttribute('transform', 'translate(5 35) scale(0.4)');
   resetPanZoomControl.setAttribute('class', 'svg-pan-zoom-control');
-  resetPanZoomControl.addEventListener('click', (_) {instance.getPublicInstance().reset();}, false);
-  resetPanZoomControl.addEventListener('touchstart', (_) {instance.getPublicInstance().reset();}, false);
+  resetPanZoomControl.addEventListener('click', (_) => instance.reset(), false);
+  resetPanZoomControl.addEventListener('touchstart', (_) => instance.reset(), false);
 
   // TODO change these background space fillers to rounded rectangles so they look prettier
   var resetPanZoomControlBackground = document.createElementNS(svgUtils.svgNS, 'rect');
@@ -106,8 +106,8 @@ GElement _createZoomOut(SvgPanZoom instance){
   zoomOut.setAttribute('id', 'svg-pan-zoom-zoom-out');
   zoomOut.setAttribute('transform', 'translate(30.5 70) scale(0.015)');
   zoomOut.setAttribute('class', 'svg-pan-zoom-control');
-  zoomOut.addEventListener('click', (_) {instance.getPublicInstance().zoomOut();}, false);
-  zoomOut.addEventListener('touchstart', (_) {instance.getPublicInstance().zoomOut();}, false);
+  zoomOut.addEventListener('click', (_) => instance.zoomOut(), false);
+  zoomOut.addEventListener('touchstart', (_) => instance.zoomOut(), false);
 
   // TODO change these background space fillers to rounded rectangles so they look prettier
   var zoomOutBackground = document.createElementNS(svgUtils.svgNS, 'rect');
@@ -126,9 +126,9 @@ GElement _createZoomOut(SvgPanZoom instance){
   return zoomOut;
 }
 
-void disable(SvgPanZoom instance) {
-  if (instance.controlIcons != null) {
-    instance.controlIcons.remove();//parentNode.removeChild(instance.controlIcons);
-    instance.controlIcons = null;
+void _disableControls(SvgPanZoom instance) {
+  if (instance._controlIcons != null) {
+    instance._controlIcons.remove();
+    instance._controlIcons = null;
   }
 }

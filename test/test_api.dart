@@ -11,11 +11,11 @@ const svgSelector = '#test-inline';
 //const svgSelectorTransform = '#test-transform';
 //const svgSelectorViewboxTransform = '#test-viewbox-transform';
 
-PublicSvgPanZoom initSvgPanZoom([SvgPanZoomOptions options, selector = svgSelector]) {
+SvgPanZoom initSvgPanZoom([SvgPanZoomOptions options, String selector = svgSelector]) {
   if (options != null) {
-    return svgPanZoom(selector, options);
+    return new SvgPanZoom.selector(selector, options);
   } else {
-    return svgPanZoom(selector);
+    return new SvgPanZoom.selector(selector);
   }
 }
 
@@ -23,7 +23,7 @@ const delta = 0.0001;
 
 main() {
   group('api tests', () {
-    PublicSvgPanZoom instance;
+    SvgPanZoom instance;
 
     setUp(() {
     });
