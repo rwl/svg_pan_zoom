@@ -2,27 +2,28 @@
 // All rights reserved.
 library svg_pan_zoom.test;
 
+import 'dart:math' show Point;
 import 'package:unittest/unittest.dart';
 import 'package:svg_pan_zoom/svg_pan_zoom.dart';
 
-var svg;
-const svgSelector = '#test-inline',
-    svgSelectorViewbox = '#test-viewbox',
-    svgSelectorTransform = '#test-transform',
-    svgSelectorViewboxTransform = '#test-viewbox-transform';
-var instance;
+const svgSelector = '#test-inline';
+//const svgSelectorViewbox = '#test-viewbox';
+//const svgSelectorTransform = '#test-transform';
+//const svgSelectorViewboxTransform = '#test-viewbox-transform';
 
-SvgPanZoom initSvgPanZoom([SvgPanZoomOptions options, selector = svgSelector]) {
+PublicSvgPanZoom initSvgPanZoom([SvgPanZoomOptions options, selector = svgSelector]) {
   if (options != null) {
-    return new SvgPanZoom(selector, options);
+    return svgPanZoom(selector, options);
   } else {
-    return new SvgPanZoom(selector);
+    return svgPanZoom(selector);
   }
 }
 
+const delta = 0.0001;
+
 main() {
   group('api tests', () {
-    SvgPanZoom instance;
+    PublicSvgPanZoom instance;
 
     setUp(() {
     });
@@ -120,7 +121,6 @@ main() {
     });
 
     test('disable double click zoom via options', () {
-      expect(1);
       instance = initSvgPanZoom(new SvgPanZoomOptions()
         ..dblClickZoomEnabled = false
       );
@@ -169,15 +169,9 @@ main() {
     test('pan', () {
       instance = initSvgPanZoom();
 
-      instance.pan({
-        x: 100,
-        y: 300
-      });
+      instance.pan(new Point(100, 300));
 
-      expect(instance.getPan(), equals({
-        x: 100,
-        y: 300
-      }));
+      expect(instance.getPan(), equals(new Point(100, 300)));
     });
 
     test('pan through API should work even if pan is disabled', () {
@@ -185,15 +179,9 @@ main() {
         ..panEnabled = false
       );
 
-      instance.pan({
-        x: 100,
-        y: 300
-      });
+      instance.pan(new Point(100, 300));
 
-      expect(instance.getPan(), equals({
-        x: 100,
-        y: 300
-      }));
+      expect(instance.getPan(), equals(new Point(100, 300)));
     });
 
     test('pan by', () {
@@ -201,15 +189,9 @@ main() {
 
       var initialPan = instance.getPan();
 
-      instance.panBy({
-        x: 100,
-        y: 300
-      });
+      instance.panBy(new Point(100, 300));
 
-      expect(instance.getPan(), equals({
-        x: initialPan.x + 100,
-        y: initialPan.y + 300
-      }));
+      expect(instance.getPan(), equals(new Point(initialPan.x + 100, initialPan.y + 300)));
     });
 
     /// Pan callbacks
@@ -223,19 +205,13 @@ main() {
         expect(point, equals(initialPan));
       });
 
-      instance.pan({
-        x: 100,
-        y: 300
-      });
+      instance.pan(new Point(100, 300));
 
       // Remove beforePan as it will be called on destroy
       instance.setBeforePan(null);
 
       // Pan one more time to test if it is really removed
-      instance.pan({
-        x: 50,
-        y: 150
-      });
+      instance.pan(new Point(50, 150));
     });
 
 
@@ -243,25 +219,16 @@ main() {
       instance = initSvgPanZoom();
 
       instance.setOnPan((point) {
-        expect(point, equals({
-          x: 100,
-          y: 300
-        }));
+        expect(point, equals(new Point(100, 300)));
       });
 
-      instance.pan({
-        x: 100,
-        y: 300
-      });
+      instance.pan(new Point(100, 300));
 
       // Remove onPan as it will be called on destroy
       instance.setOnPan(null);
 
       // Pan one more time to test if it is really removed
-      instance.pan({
-        x: 50,
-        y: 150
-      });
+      instance.pan(new Point(50, 150));
     });
 
     /// Zoom
@@ -289,16 +256,10 @@ main() {
         ..fit = false
       );
 
-      instance.zoomAtPoint(2, {
-        x: 200,
-        y: 100
-      });
+      instance.zoomAtPoint(2, new Point(200, 100));
 
-      expect(instance.getZoom(), closeTo(2));
-      expect(instance.getPan(), equals({
-        x: -300,
-        y: -600
-      }));
+      expect(instance.getZoom(), closeTo(2, delta));
+      expect(instance.getPan(), equals(new Point(-300, -600)));
     });
 
     test('zoom at point by', () {
@@ -306,16 +267,10 @@ main() {
         ..fit = false
       );
 
-      instance.zoomAtPointBy(2, {
-        x: 200,
-        y: 100
-      });
+      instance.zoomAtPointBy(2, new Point(200, 100));
 
-      expect(instance.getZoom(), closeTo(2));
-      expect(instance.getPan(), equals({
-        x: -300,
-        y: -600
-      }));
+      expect(instance.getZoom(), closeTo(2, delta));
+      expect(instance.getPan(), equals(new Point(-300, -600)));
     });
 
     test('zoom in', () {
@@ -325,9 +280,9 @@ main() {
 
       instance.zoomIn();
 
-      expect(instance.getZoom(), closeTo(1.2));
-      expect(instance.getPan().x, closeTo(-130));
-      expect(instance.getPan().y, closeTo(-330));
+      expect(instance.getZoom(), closeTo(1.2, delta));
+      expect(instance.getPan().x, closeTo(-130, delta));
+      expect(instance.getPan().y, closeTo(-330, delta));
     });
 
     test('zoom out', () {
@@ -337,9 +292,9 @@ main() {
 
       instance.zoomOut();
 
-      expect(instance.getZoom(), closeTo(0.833333));
-      expect(instance.getPan().x, closeTo(16.666666));
-      expect(instance.getPan().y, closeTo(-183.333325));
+      expect(instance.getZoom(), closeTo(0.833333, delta));
+      expect(instance.getPan().x, closeTo(16.666666, delta));
+      expect(instance.getPan().y, closeTo(-183.333325, delta));
     });
 
     /// Zoom settings (min, max, sensitivity)
@@ -404,7 +359,7 @@ main() {
 
       instance.zoomIn();
 
-      expect(instance.getZoom(), closeTo(initialZoom * (1 + sensitivity)), reason: 'Check if zoom in uses scale sensitivity right');
+      expect(instance.getZoom(), closeTo(initialZoom * (1 + sensitivity), delta), reason: 'Check if zoom in uses scale sensitivity right');
 
       // Lets zoom to 2
       instance.zoom(2);
@@ -412,7 +367,7 @@ main() {
       // Now lets zoom out
       instance.zoomOut();
 
-      expect(instance.getZoom(), closeTo(2 / (1 + sensitivity)), reason: 'Check if zoom out uses scale sensitiviry right');
+      expect(instance.getZoom(), closeTo(2 / (1 + sensitivity), delta), reason: 'Check if zoom out uses scale sensitiviry right');
     });
 
     /// Zoom callbacks
@@ -423,7 +378,7 @@ main() {
       var initialZoom = instance.getZoom();
 
       instance.setBeforeZoom((scale) {
-        expect(scale, closeTo(initialZoom));
+        expect(scale, closeTo(initialZoom, delta));
       });
 
       instance.zoom(2.3);
@@ -440,7 +395,7 @@ main() {
       instance = initSvgPanZoom();
 
       instance.setOnZoom((scale) {
-        expect(scale, closeTo(2.3));
+        expect(scale, closeTo(2.3, delta));
       });
 
       instance.zoom(2.3);
@@ -463,7 +418,7 @@ main() {
 
       instance.resetZoom();
 
-      expect(instance.getZoom(), closeTo(initialZoom));
+      expect(instance.getZoom(), closeTo(initialZoom, delta));
     });
 
     test('reset pan', () {
@@ -471,10 +426,7 @@ main() {
 
       var initialPan = instance.getPan();
 
-      instance.panBy({
-        x: 100,
-        y: 300
-      });
+      instance.panBy(new Point(100, 300));
 
       instance.resetPan();
 
@@ -488,14 +440,11 @@ main() {
           initialPan = instance.getPan();
 
       instance.zoom(2.3);
-      instance.panBy({
-        x: 100,
-        y: 300
-      });
+      instance.panBy(new Point(100, 300));
 
       instance.reset();
 
-      expect(instance.getZoom(), closeTo(initialZoom));
+      expect(instance.getZoom(), closeTo(initialZoom, delta));
       expect(instance.getPan(), equals(initialPan));
     });
 
@@ -510,7 +459,7 @@ main() {
 
       instance.fit();
 
-      expect(instance.getZoom(), closeTo(1));
+      expect(instance.getZoom(), closeTo(1, delta));
     });
 
     /// SVG size 700x300
@@ -538,10 +487,7 @@ main() {
 
       instance.center();
 
-      expect(instance.getPan(), equals({
-        x: 200,
-        y: 0
-      }));
+      expect(instance.getPan(), equals(new Point(200, 0)));
     });
 
     /// SVG size 700x300
@@ -556,10 +502,7 @@ main() {
       instance.zoom(0.5);
       instance.center();
 
-      expect(instance.getPan(), equals({
-        x: 275,
-        y: 75
-      }));
+      expect(instance.getPan(), equals(new Point(275, 75)));
     });
 
     /// Resize

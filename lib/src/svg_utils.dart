@@ -78,7 +78,7 @@ GElement getOrCreateViewport(SvgSvgElement svg, dynamic selector) {
 
   // Parse class names
   var classNames = [];
-  if (viewport.getAttribute('class')) {
+  if (viewport.getAttribute('class') != null) {
     classNames = viewport.getAttribute('class').split(' ');
   }
 

@@ -1,5 +1,6 @@
 library svg_pan_zoom.internal.utils;
 
+import 'dart:async';
 import 'dart:html';
 import 'dart:math' as math;
 import 'dart:svg' hide ImageElement;
@@ -31,12 +32,20 @@ SvgSvgElement getSvg(dynamic elementOrSelector) {
   if (element.tagName.toLowerCase() == 'svg') {
     svg = element;
   } else {
-    if (element.tagName.toLowerCase() == 'object') {
+    throw new Exception('Cannot get SVG.');
+    /*if (element.tagName.toLowerCase() == 'object') {
       svg = element.contentDocument.documentElement;
     } else {
       //if (element.tagName.toLowerCase() == 'embed') {
       if (element is EmbedElement) {
-        svg = element.getSVGDocument().documentElement;
+        //svg = element.getSVGDocument().documentElement;
+
+        var request = new HttpRequest()
+          ..open('GET', element.src, async: false)
+          ..send();
+        final doc = new DomParser().parseFromString(request.responseText, 'text/xml');
+        svg = doc.documentElement;
+
       } else {
         //if (element.tagName.toLowerCase() === 'img') {
         if (element is ImageElement) {
@@ -46,7 +55,7 @@ SvgSvgElement getSvg(dynamic elementOrSelector) {
         }
         return null;
       }
-    }
+    }*/
   }
 
   return svg;
@@ -124,8 +133,9 @@ Function createRequestAnimationFrame(dynamic refreshRate) {
 }
 
 /// Create a callback that will execute after a given timeout
-Function requestTimeout(timeout) {
+Function requestTimeout(num timeout) {
   return (callback) {
-    window.setTimeout(callback, timeout);
+    //window.setTimeout(callback, timeout);
+    new Future.delayed(new Duration(milliseconds: timeout), callback);
   };
 }

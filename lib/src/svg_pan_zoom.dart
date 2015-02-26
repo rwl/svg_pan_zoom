@@ -8,7 +8,7 @@ import 'dart:async';
 import 'dart:svg' hide ImageElement;
 import 'shadow_viewport.dart';
 import 'svg_utils.dart' as svgUtils;
-import 'control_icons.dart' as controlIcons;
+import 'control_icons.dart' as controls;
 import 'utils.dart' as utils;
 
 //var Wheel = require('./uniwheel')
@@ -142,7 +142,7 @@ class SvgPanZoom {
     publicInstance.setOnPan(options.onPan);
 
     if (this.options.controlIconsEnabled) {
-      controlIcons.enable(this);
+      controls.enable(this);
     }
 
     // Init events handlers
@@ -585,9 +585,9 @@ class SvgPanZoom {
     reset();
 
     // Remove instance from instancesStore
-    instancesStore = instancesStore.filter((instance){
-      return instance.svg != svg;
-    });
+    instancesStore = instancesStore.where((Map instance) {
+      return instance['svg'] != svg;
+    }).toList();
 
     // Delete options and its contents
     /*delete*/ options = null;
@@ -595,9 +595,9 @@ class SvgPanZoom {
     // Destroy public instance and rewrite getPublicInstance
     /*delete*/ publicInstance = null;
     /*delete*/ pi = null;
-    getPublicInstance = () {
-      return null;
-    };
+//    getPublicInstance = () {
+//      return null;
+//    };
   }
 
   /// Returns a public instance object
@@ -605,327 +605,329 @@ class SvgPanZoom {
   getPublicInstance() {
     // Create cache
     if (publicInstance == null) {
-      publicInstance = pi = {
-        // Pan
-        enablePan: () {that.options.panEnabled = true; return that.pi;}
-      , disablePan: () {that.options.panEnabled = false; return that.pi;}
-      , isPanEnabled: () {return !!that.options.panEnabled;}
-      , pan: (point) {that.pan(point); return that.pi;}
-      , panBy: (point) {that.panBy(point); return that.pi;}
-      , getPan: () {return that.getPan();}
-        // Pan event
-      , setBeforePan: (fn) {that.options.beforePan = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
-      , setOnPan: (fn) {that.options.onPan = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
-        // Zoom and Control Icons
-      , enableZoom: () {that.options.zoomEnabled = true; return that.pi;}
-      , disableZoom: () {that.options.zoomEnabled = false; return that.pi;}
-      , isZoomEnabled: () {return !!that.options.zoomEnabled;}
-      , enableControlIcons: () {
-          if (!that.options.controlIconsEnabled) {
-            that.options.controlIconsEnabled = true;
-            ControlIcons.enable(that);
-          }
-          return that.pi;
-        }
-      , disableControlIcons: () {
-          if (that.options.controlIconsEnabled) {
-            that.options.controlIconsEnabled = false;
-            ControlIcons.disable(that);
-          }
-          return that.pi;
-        }
-      , isControlIconsEnabled: () {return !!that.options.controlIconsEnabled;}
-        // Double click zoom
-      , enableDblClickZoom: () {that.options.dblClickZoomEnabled = true; return that.pi;}
-      , disableDblClickZoom: () {that.options.dblClickZoomEnabled = false; return that.pi;}
-      , isDblClickZoomEnabled: () {return !!that.options.dblClickZoomEnabled;}
-        // Mouse wheel zoom
-      , enableMouseWheelZoom: () {that.enableMouseWheelZoom(); return that.pi;}
-      , disableMouseWheelZoom: () {that.disableMouseWheelZoom(); return that.pi;}
-      , isMouseWheelZoomEnabled: () {return !!that.options.mouseWheelZoomEnabled;}
-        // Zoom scale and bounds
-      , setZoomScaleSensitivity: (scale) {that.options.zoomScaleSensitivity = scale; return that.pi;}
-      , setMinZoom: (zoom) {that.options.minZoom = zoom; return that.pi;}
-      , setMaxZoom: (zoom) {that.options.maxZoom = zoom; return that.pi;}
-        // Zoom event
-      , setBeforeZoom: (fn) {that.options.beforeZoom = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
-      , setOnZoom: (fn) {that.options.onZoom = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
-        // Zooming
-      , zoom: (scale) {that.publicZoom(scale, true); return that.pi;}
-      , zoomBy: (scale) {that.publicZoom(scale, false); return that.pi;}
-      , zoomAtPoint: (scale, point) {that.publicZoomAtPoint(scale, point, true); return that.pi;}
-      , zoomAtPointBy: (scale, point) {that.publicZoomAtPoint(scale, point, false); return that.pi;}
-      , zoomIn: () {this.zoomBy(1 + that.options.zoomScaleSensitivity); return that.pi;}
-      , zoomOut: () {this.zoomBy(1 / (1 + that.options.zoomScaleSensitivity)); return that.pi;}
-      , getZoom: () {return that.getRelativeZoom();}
-        // Reset
-      , resetZoom: () {that.resetZoom(); return that.pi;}
-      , resetPan: () {that.resetPan(); return that.pi;}
-      , reset: () {that.reset(); return that.pi;}
-        // Fit and Center
-      , fit: () {that.fit(); return that.pi;}
-      , center: () {that.center(); return that.pi;}
-        // Size and Resize
-      , updateBBox: () {that.updateBBox(); return that.pi;}
-      , resize: () {that.resize(); return that.pi;}
-      , getSizes: () {
-          return {
-            width: that.width
-          , height: that.height
-          , realZoom: that.getZoom()
-          , viewBox: that.viewport.getViewBox()
-          };
-        }
-        // Destroy
-      , destroy: () {that.destroy(); return that.pi;}
-      };
+      publicInstance = pi = new PublicSvgPanZoom(this);
+//      publicInstance = pi = {
+//        // Pan
+//        enablePan: () {that.options.panEnabled = true; return that.pi;}
+//      , disablePan: () {that.options.panEnabled = false; return that.pi;}
+//      , isPanEnabled: () {return !!that.options.panEnabled;}
+//      , pan: (point) {that.pan(point); return that.pi;}
+//      , panBy: (point) {that.panBy(point); return that.pi;}
+//      , getPan: () {return that.getPan();}
+//        // Pan event
+//      , setBeforePan: (fn) {that.options.beforePan = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
+//      , setOnPan: (fn) {that.options.onPan = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
+//        // Zoom and Control Icons
+//      , enableZoom: () {that.options.zoomEnabled = true; return that.pi;}
+//      , disableZoom: () {that.options.zoomEnabled = false; return that.pi;}
+//      , isZoomEnabled: () {return !!that.options.zoomEnabled;}
+//      , enableControlIcons: () {
+//          if (!that.options.controlIconsEnabled) {
+//            that.options.controlIconsEnabled = true;
+//            ControlIcons.enable(that);
+//          }
+//          return that.pi;
+//        }
+//      , disableControlIcons: () {
+//          if (that.options.controlIconsEnabled) {
+//            that.options.controlIconsEnabled = false;
+//            ControlIcons.disable(that);
+//          }
+//          return that.pi;
+//        }
+//      , isControlIconsEnabled: () {return !!that.options.controlIconsEnabled;}
+//        // Double click zoom
+//      , enableDblClickZoom: () {that.options.dblClickZoomEnabled = true; return that.pi;}
+//      , disableDblClickZoom: () {that.options.dblClickZoomEnabled = false; return that.pi;}
+//      , isDblClickZoomEnabled: () {return !!that.options.dblClickZoomEnabled;}
+//        // Mouse wheel zoom
+//      , enableMouseWheelZoom: () {that.enableMouseWheelZoom(); return that.pi;}
+//      , disableMouseWheelZoom: () {that.disableMouseWheelZoom(); return that.pi;}
+//      , isMouseWheelZoomEnabled: () {return !!that.options.mouseWheelZoomEnabled;}
+//        // Zoom scale and bounds
+//      , setZoomScaleSensitivity: (scale) {that.options.zoomScaleSensitivity = scale; return that.pi;}
+//      , setMinZoom: (zoom) {that.options.minZoom = zoom; return that.pi;}
+//      , setMaxZoom: (zoom) {that.options.maxZoom = zoom; return that.pi;}
+//        // Zoom event
+//      , setBeforeZoom: (fn) {that.options.beforeZoom = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
+//      , setOnZoom: (fn) {that.options.onZoom = fn == null ? null : Utils.proxy(fn, that.publicInstance); return that.pi;}
+//        // Zooming
+//      , zoom: (scale) {that.publicZoom(scale, true); return that.pi;}
+//      , zoomBy: (scale) {that.publicZoom(scale, false); return that.pi;}
+//      , zoomAtPoint: (scale, point) {that.publicZoomAtPoint(scale, point, true); return that.pi;}
+//      , zoomAtPointBy: (scale, point) {that.publicZoomAtPoint(scale, point, false); return that.pi;}
+//      , zoomIn: () {this.zoomBy(1 + that.options.zoomScaleSensitivity); return that.pi;}
+//      , zoomOut: () {this.zoomBy(1 / (1 + that.options.zoomScaleSensitivity)); return that.pi;}
+//      , getZoom: () {return that.getRelativeZoom();}
+//        // Reset
+//      , resetZoom: () {that.resetZoom(); return that.pi;}
+//      , resetPan: () {that.resetPan(); return that.pi;}
+//      , reset: () {that.reset(); return that.pi;}
+//        // Fit and Center
+//      , fit: () {that.fit(); return that.pi;}
+//      , center: () {that.center(); return that.pi;}
+//        // Size and Resize
+//      , updateBBox: () {that.updateBBox(); return that.pi;}
+//      , resize: () {that.resize(); return that.pi;}
+//      , getSizes: () {
+//          return {
+//            width: that.width
+//          , height: that.height
+//          , realZoom: that.getZoom()
+//          , viewBox: that.viewport.getViewBox()
+//          };
+//        }
+//        // Destroy
+//      , destroy: () {that.destroy(); return that.pi;}
+//      };
     }
 
-    return this.publicInstance;
+    return publicInstance;
   }
 }
 
 class PublicSvgPanZoom {
-  SvgPanZoom that;
+  final SvgPanZoom spz;
+  PublicSvgPanZoom(this.spz);
 
   /// Pan
 
   enablePan() {
-    that.options.panEnabled = true;
-    return that.pi;
+    spz.options.panEnabled = true;
+    return spz.pi;
   }
 
   disablePan() {
-    that.options.panEnabled = false;
-    return that.pi;
+    spz.options.panEnabled = false;
+    return spz.pi;
   }
 
   isPanEnabled() {
-    return !!that.options.panEnabled;
+    return !!spz.options.panEnabled;
   }
 
   pan(point) {
-    that.pan(point);
-    return that.pi;
+    spz.pan(point);
+    return spz.pi;
   }
 
   panBy(point) {
-    that.panBy(point);
-    return that.pi;
+    spz.panBy(point);
+    return spz.pi;
   }
 
   getPan() {
-    return that.getPan();
+    return spz.getPan();
   }
 
   /// Pan event
   setBeforePan(fn) {
-    that.options.beforePan = fn == null ? null : Utils.proxy(fn, that.publicInstance);
-    return that.pi;
+    spz.options.beforePan = fn;// == null ? null : Utils.proxy(fn, spz.publicInstance);
+    return spz.pi;
   }
 
   setOnPan(fn) {
-    that.options.onPan = fn == null ? null : Utils.proxy(fn, that.publicInstance);
-    return that.pi;
+    spz.options.onPan = fn;// == null ? null : Utils.proxy(fn, spz.publicInstance);
+    return spz.pi;
   }
 
   /// Zoom and control icons.
 
   enableZoom() {
-    that.options.zoomEnabled = true;
-    return that.pi;
+    spz.options.zoomEnabled = true;
+    return spz.pi;
   }
 
   disableZoom() {
-    that.options.zoomEnabled = false;
-    return that.pi;
+    spz.options.zoomEnabled = false;
+    return spz.pi;
   }
 
   isZoomEnabled() {
-    return !!that.options.zoomEnabled;
+    return !!spz.options.zoomEnabled;
   }
 
   enableControlIcons() {
-    if (!that.options.controlIconsEnabled) {
-      that.options.controlIconsEnabled = true;
-      controlIcons.enable(that);
+    if (!spz.options.controlIconsEnabled) {
+      spz.options.controlIconsEnabled = true;
+      controls.enable(spz);
     }
-    return that.pi;
+    return spz.pi;
   }
 
   disableControlIcons() {
-    if (that.options.controlIconsEnabled) {
-      that.options.controlIconsEnabled = false;
-      controlIcons.disable(that);
+    if (spz.options.controlIconsEnabled) {
+      spz.options.controlIconsEnabled = false;
+      controls.disable(spz);
     }
-    return that.pi;
+    return spz.pi;
   }
 
   isControlIconsEnabled() {
-    return !!that.options.controlIconsEnabled;
+    return !!spz.options.controlIconsEnabled;
   }
 
   /// Double click zoom.
 
   enableDblClickZoom() {
-    that.options.dblClickZoomEnabled = true;
-    return that.pi;
+    spz.options.dblClickZoomEnabled = true;
+    return spz.pi;
   }
 
   disableDblClickZoom() {
-    that.options.dblClickZoomEnabled = false;
-    return that.pi;
+    spz.options.dblClickZoomEnabled = false;
+    return spz.pi;
   }
 
   isDblClickZoomEnabled() {
-    return !!that.options.dblClickZoomEnabled;
+    return !!spz.options.dblClickZoomEnabled;
   }
 
   /// Mouse wheel zoom
 
   enableMouseWheelZoom() {
-    that.enableMouseWheelZoom();
-    return that.pi;
+    spz.enableMouseWheelZoom();
+    return spz.pi;
   }
 
   disableMouseWheelZoom() {
-    that.disableMouseWheelZoom();
-    return that.pi;
+    spz.disableMouseWheelZoom();
+    return spz.pi;
   }
 
   isMouseWheelZoomEnabled() {
-    return !!that.options.mouseWheelZoomEnabled;
+    return !!spz.options.mouseWheelZoomEnabled;
   }
 
   /// Zoom scale and bounds
 
   setZoomScaleSensitivity(scale) {
-    that.options.zoomScaleSensitivity = scale;
-    return that.pi;
+    spz.options.zoomScaleSensitivity = scale;
+    return spz.pi;
   }
 
   setMinZoom(zoom) {
-    that.options.minZoom = zoom;
-    return that.pi;
+    spz.options.minZoom = zoom;
+    return spz.pi;
   }
 
   setMaxZoom(zoom) {
-    that.options.maxZoom = zoom;
-    return that.pi;
+    spz.options.maxZoom = zoom;
+    return spz.pi;
   }
 
   /// Zoom event
 
   setBeforeZoom(fn) {
-    that.options.beforeZoom = fn == null ? null : Utils.proxy(fn, that.publicInstance);
-    return that.pi;
+    spz.options.beforeZoom = fn;// == null ? null : Utils.proxy(fn, spz.publicInstance);
+    return spz.pi;
   }
 
   setOnZoom(fn) {
-    that.options.onZoom = fn == null ? null : Utils.proxy(fn, that.publicInstance);
-    return that.pi;
+    spz.options.onZoom = fn;// == null ? null : Utils.proxy(fn, spz.publicInstance);
+    return spz.pi;
   }
 
   /// Zooming
 
   zoom(scale) {
-    that.publicZoom(scale, true);
-    return that.pi;
+    spz.publicZoom(scale, true);
+    return spz.pi;
   }
 
   zoomBy(scale) {
-    that.publicZoom(scale, false);
-    return that.pi;
+    spz.publicZoom(scale, false);
+    return spz.pi;
   }
 
   zoomAtPoint(scale, point) {
-    that.publicZoomAtPoint(scale, point, true);
-    return that.pi;
+    spz.publicZoomAtPoint(scale, point, true);
+    return spz.pi;
   }
 
   zoomAtPointBy(scale, point) {
-    that.publicZoomAtPoint(scale, point, false);
-    return that.pi;
+    spz.publicZoomAtPoint(scale, point, false);
+    return spz.pi;
   }
 
   zoomIn() {
-    zoomBy(1 + that.options.zoomScaleSensitivity);
-    return that.pi;
+    zoomBy(1 + spz.options.zoomScaleSensitivity);
+    return spz.pi;
   }
 
   zoomOut() {
-    zoomBy(1 / (1 + that.options.zoomScaleSensitivity));
-    return that.pi;
+    zoomBy(1 / (1 + spz.options.zoomScaleSensitivity));
+    return spz.pi;
   }
 
   getZoom() {
-    return that.getRelativeZoom();
+    return spz.getRelativeZoom();
   }
 
   /// Reset
 
   resetZoom() {
-    that.resetZoom();
-    return that.pi;
+    spz.resetZoom();
+    return spz.pi;
   }
 
   resetPan() {
-    that.resetPan();
-    return that.pi;
+    spz.resetPan();
+    return spz.pi;
   }
 
   reset() {
-    that.reset();
-    return that.pi;
+    spz.reset();
+    return spz.pi;
   }
 
   /// Fit and Center
 
   fit() {
-    that.fit();
-    return that.pi;
+    spz.fit();
+    return spz.pi;
   }
 
   center() {
-    that.center();
-    return that.pi;
+    spz.center();
+    return spz.pi;
   }
 
   /// Size and Resize
 
   updateBBox() {
-    that.updateBBox();
-    return that.pi;
+    spz.updateBBox();
+    return spz.pi;
   }
 
   resize() {
-    that.resize();
-    return that.pi;
+    spz.resize();
+    return spz.pi;
   }
 
   getSizes() {
     return {
-      'width': that.width,
-      'height': that.height,
-      'realZoom': that.getZoom(),
-      'viewBox': that.viewport.getViewBox()
+      'width': spz.width,
+      'height': spz.height,
+      'realZoom': spz.getZoom(),
+      'viewBox': spz.viewport.getViewBox()
     };
   }
 
   /// Destroy
 
   destroy() {
-    that.destroy();
-    return that.pi;
+    spz.destroy();
+    return spz.pi;
   }
 }
 
 /// Stores pairs of instances of SvgPanZoom and SVG.
 /// Each pair is represented by a map:
 ///     {'svg': SVGSVGElement, 'instance': SvgPanZoom}
-final instancesStore = [];
+List<Map<SvgSvgElement, SvgPanZoom>> instancesStore = [];
 
-PublicSvgPanZoom svgPanZoom(elementOrSelector, SvgPanZoomOptions options) {
+PublicSvgPanZoom svgPanZoom(elementOrSelector, [SvgPanZoomOptions options]) {
   var svg = utils.getSvg(elementOrSelector);
 
   if (svg == null) {
@@ -933,8 +935,8 @@ PublicSvgPanZoom svgPanZoom(elementOrSelector, SvgPanZoomOptions options) {
   } else {
     // Look for existent instance
     for(var i = instancesStore.length - 1; i >= 0; i--) {
-      if (instancesStore[i].svg == svg) {
-        return instancesStore[i].instance.getPublicInstance();
+      if (instancesStore[i]['svg'] == svg) {
+        return instancesStore[i]['instance'].getPublicInstance();
       }
     }
 
@@ -945,7 +947,7 @@ PublicSvgPanZoom svgPanZoom(elementOrSelector, SvgPanZoomOptions options) {
     });
 
     // Return just pushed instance
-    return instancesStore[instancesStore.length - 1].instance.getPublicInstance();
+    return instancesStore[instancesStore.length - 1]['instance'].getPublicInstance();
   }
 }
 
