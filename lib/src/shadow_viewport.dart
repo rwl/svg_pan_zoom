@@ -9,21 +9,36 @@ library svg_pan_zoom.internal.shadow_viewport;
 //}
 
 import 'dart:math' show Rectangle;
+import 'dart:math' as math;
 import 'dart:svg';
+import 'dart:html' show window;
+import 'svg_utils.dart' as svgUtils;
+import 'utils.dart' as utils;
 
 class State {
   final num zoom, x, y;
   State({this.zoom, this.x, this.y});
   factory State.from(State s) {
-    return new State(s.zoom, s.x, s.y);
+    return new State(zoom: s.zoom, x: s.x, y: s.y);
   }
+}
+
+class ViewportOptions {
+  SvgSvgElement svg;
+  num height, width;
+  bool fit, center;
+  String refreshRate;
+  Function beforeZoom, onZoom, beforePan, onPan;
 }
 
 class ShadowViewport {
   GElement viewport;
-  Map options;
+  ViewportOptions options;
   State originalState, activeState;
   Rectangle viewBox;
+
+  Function requestAnimationFrame;
+  Function updateCTMCached;
 
   ShadowViewport(this.viewport, this.options) {
     // DOM Elements
@@ -34,10 +49,10 @@ class ShadowViewport {
     originalState = new State(zoom: 1, x: 0, y: 0);
     activeState = new State(zoom: 1, x: 0, y: 0);
 
-    this.updateCTMCached = Utils.proxy(this.updateCTM, this);
+    updateCTMCached = updateCTM;//Utils.proxy(this.updateCTM, this);
 
     // Create a custom requestAnimationFrame taking in account refreshRate
-    this.requestAnimationFrame = Utils.createRequestAnimationFrame(this.options.refreshRate);
+    requestAnimationFrame = utils.createRequestAnimationFrame(options.refreshRate);
 
     // ViewBox
     viewBox = new Rectangle(0, 0, 0, 0);
@@ -47,99 +62,96 @@ class ShadowViewport {
     processCTM();
   }
 
-  /**
-   * Cache initial viewBox value
-   * If no viewBox is defined, then use viewport size/position instead for viewBox values
-   */
-  cacheViewBox() {
+  /// Cache initial viewBox value
+  /// If no viewBox is defined, then use viewport size/position instead for
+  /// viewBox values.
+  void cacheViewBox() {
     var svgViewBox = this.options.svg.getAttribute('viewBox');
 
     if (svgViewBox) {
-      var viewBoxValues = svgViewBox.split(' ').map(parseFloat);
+      var viewBoxValues = svgViewBox.split(' ').map(double.parse);
 
       // Cache viewbox x and y offset
-      this.viewBox.x = viewBoxValues[0];
-      this.viewBox.y = viewBoxValues[1];
-      this.viewBox.width = viewBoxValues[2];
-      this.viewBox.height = viewBoxValues[3];
+      var /*this.viewBox.*/x = viewBoxValues[0];
+      var /*this.viewBox.*/y = viewBoxValues[1];
+      var /*this.viewBox.*/width = viewBoxValues[2];
+      var /*this.viewBox.*/height = viewBoxValues[3];
+      viewBox = new Rectangle(x,  y, width, height);
 
-      var zoom = Math.min(this.options.width / this.viewBox.width, this.options.height / this.viewBox.height);
+      var zoom = math.min(options.width / viewBox.width, options.height / viewBox.height);
 
       // Update active state
-      this.activeState.zoom = zoom;
-      this.activeState.x = (this.options.width - this.viewBox.width * zoom) / 2;
-      this.activeState.y = (this.options.height - this.viewBox.height * zoom) / 2;
+      //this.activeState.zoom = zoom;
+      var/*this.activeState.*/ sx = (options.width - viewBox.width * zoom) / 2;
+      var/*this.activeState.*/ sy = (options.height - viewBox.height * zoom) / 2;
+      activeState = new State(zoom: zoom, x: sx, y: sy);
 
       // Force updating CTM
-      this.updateCTMOnNextFrame();
+      updateCTMOnNextFrame();
 
-      this.options.svg.removeAttribute('viewBox');
+      options.svg.attributes.remove('viewBox');
     } else {
       var bBox = this.viewport.getBBox();
 
       // Cache viewbox sizes
-      this.viewBox.x = bBox.x;
-      this.viewBox.y = bBox.y;
-      this.viewBox.width = bBox.width;
-      this.viewBox.height = bBox.height;
+      var/*this.viewBox.*/ x = bBox.x;
+      var/*this.viewBox.*/ y = bBox.y;
+      var/*this.viewBox.*/ width = bBox.width;
+      var/*this.viewBox.*/ height = bBox.height;
+      viewBox = new Rectangle(x, y, width, height);
     }
   }
 
-  /**
-   * Recalculate viewport sizes and update viewBox cache
-   */
+  /// Recalculate viewport sizes and update viewBox cache.
   recacheViewBox() {
-    var boundingClientRect = this.viewport.getBoundingClientRect()
-      , viewBoxWidth = boundingClientRect.width / this.getZoom()
-      , viewBoxHeight = boundingClientRect.height / this.getZoom();
+    var boundingClientRect = viewport.getBoundingClientRect();
+    var viewBoxWidth = boundingClientRect.width / getZoom();
+    var viewBoxHeight = boundingClientRect.height / getZoom();
 
     // Cache viewbox
-    this.viewBox.x = 0;
-    this.viewBox.y = 0;
-    this.viewBox.width = viewBoxWidth;
-    this.viewBox.height = viewBoxHeight;
+    var/*this.viewBox.*/ x = 0;
+    var/*this.viewBox.*/ y = 0;
+    var/*this.viewBox.*/ width = viewBoxWidth;
+    var/*this.viewBox.*/ height = viewBoxHeight;
+    viewBox = new Rectangle(x, y, width, height);
   }
 
-  /**
-   * Returns a viewbox object. Safe to alter
-   *
-   * @return {Object} viewbox object
-   */
-  getViewBox() {
-    return Utils.extend({}, this.viewBox);
+  /// Returns a viewbox object. Safe to alter.
+  Rectangle getViewBox() {
+    //return Utils.extend({}, this.viewBox);
+    return new Rectangle(viewBox.left, viewBox.top, viewBox.width, viewBox.height);
   }
 
-  /**
-   * Get initial zoom and pan values. Save them into originalState
-   * Parses viewBox attribute to alter initial sizes
-   */
+  /// Get initial zoom and pan values. Save them into originalState.
+  /// Parses viewBox attribute to alter initial sizes
   processCTM() {
-    var newCTM = this.getCTM();
+    final newCTM = getCTM();
 
-    if (this.options.fit) {
-      var newScale = Math.min(this.options.width/(this.viewBox.width - this.viewBox.x), this.options.height/(this.viewBox.height - this.viewBox.y));
+    if (options.fit) {
+      var newScale = math.min(options.width/(viewBox.width - viewBox.left), options.height/(viewBox.height - viewBox.top));
 
       newCTM.a = newScale; //x-scale
       newCTM.d = newScale; //y-scale
-      newCTM.e = -this.viewBox.x * newScale; //x-transform
-      newCTM.f = -this.viewBox.y * newScale; //y-transform
+      newCTM.e = -viewBox.left * newScale; //x-transform
+      newCTM.f = -viewBox.top * newScale; //y-transform
     }
 
-    if (this.options.center) {
-      var offsetX = (this.options.width - (this.viewBox.width + this.viewBox.x) * newCTM.a) * 0.5
-        , offsetY = (this.options.height - (this.viewBox.height + this.viewBox.y) * newCTM.a) * 0.5;
+    if (options.center) {
+      var offsetX = (options.width - (viewBox.width + viewBox.left) * newCTM.a) * 0.5;
+      var offsetY = (options.height - (viewBox.height + viewBox.top) * newCTM.a) * 0.5;
 
       newCTM.e = offsetX;
       newCTM.f = offsetY;
     }
 
     // Cache initial values. Based on activeState and fix+center opitons
-    this.originalState.zoom = newCTM.a;
-    this.originalState.x = newCTM.e;
-    this.originalState.y = newCTM.f;
+    var/*this.originalState.*/ zoom = newCTM.a;
+    var/*this.originalState.*/ x = newCTM.e;
+    var/*this.originalState.*/ y = newCTM.f;
+    originalState = new State(zoom: zoom, x: x, y: y);
 
-    // Update viewport CTM and cache zoom and pan
-    this.setCTM(newCTM);
+    // Update viewport CTM and cache zoom and pan.
+    setCTM(newCTM);
   }
 
   /// Return originalState object. Safe to alter
@@ -148,57 +160,33 @@ class ShadowViewport {
     return new State.from(originalState);
   }
 
-  /**
-   * Return actualState object. Safe to alter
-   *
-   * @return {Object}
-   */
+  /// Return actualState object. Safe to alter.
   State getState() {
 //    return Utils.extend({}, this.activeState);
     return new State.from(activeState);
   }
 
-  /**
-   * Get zoom scale
-   *
-   * @return {Float} zoom scale
-   */
-  getZoom() {
-    return this.activeState.zoom;
+  /// Get zoom scale.
+  num getZoom() {
+    return activeState.zoom;
   }
 
-  /**
-   * Get zoom scale for pubilc usage
-   *
-   * @return {Float} zoom scale
-   */
-  getRelativeZoom() {
-    return this.activeState.zoom / this.originalState.zoom;
+  /// Get zoom scale for pubilc usage.
+  num getRelativeZoom() {
+    return activeState.zoom / originalState.zoom;
   }
 
-  /**
-   * Compute zoom scale for pubilc usage
-   *
-   * @return {Float} zoom scale
-   */
-  computeRelativeZoom(scale) {
-    return scale / this.originalState.zoom;
+  /// Compute zoom scale for pubilc usage.
+  computeRelativeZoom(num scale) {
+    return scale / originalState.zoom;
   }
 
-  /**
-   * Get pan
-   *
-   * @return {Object}
-   */
-  getPan() {
-    return {x: this.activeState.x, y: this.activeState.y};
+  /// Get pan.
+  math.Point getPan() {
+    return new math.Point(activeState.x, activeState.y);
   }
 
-  /**
-   * Return cached viewport CTM value that can be safely modified
-   *
-   * @return {SVGMatrix}
-   */
+  /// Return cached viewport CTM value that can be safely modified.
   Matrix getCTM() {
     Matrix safeCTM = options.svg.createSvgMatrix();
 
@@ -213,58 +201,54 @@ class ShadowViewport {
     return safeCTM;
   }
 
-  /**
-   * Set a new CTM
-   *
-   * @param {SVGMatrix} newCTM
-   */
-  setCTM(newCTM) {
-    var willZoom = this.isZoomDifferent(newCTM)
-      , willPan = this.isPanDifferent(newCTM);
+  /// Set a new CTM.
+  setCTM(Matrix newCTM) {
+    bool willZoom = this.isZoomDifferent(newCTM);
+    bool willPan = this.isPanDifferent(newCTM);
 
     if (willZoom || willPan) {
       // Before zoom
       if (willZoom) {
         // If returns false then cancel zooming
-        if (this.options.beforeZoom(this.getRelativeZoom(), this.computeRelativeZoom(newCTM.a)) == false) {
-          newCTM.a = newCTM.d = this.activeState.zoom;
+        if (options.beforeZoom(getRelativeZoom(), computeRelativeZoom(newCTM.a)) == false) {
+          newCTM.a = newCTM.d = activeState.zoom;
           willZoom = false;
         }
       }
 
       // Before pan
       if (willPan) {
-        var preventPan = this.options.beforePan(this.getPan(), {x: newCTM.e, y: newCTM.f})
-            // If prevent pan is an object
-          , preventPanX = false
-          , preventPanY = false;
+        var preventPan = options.beforePan(getPan(), new math.Point(newCTM.e, newCTM.f));
+        // If prevent pan is an object
+        bool preventPanX = false;
+        bool preventPanY = false;
 
         // If prevent pan is Boolean false
         if (preventPan == false) {
           // Set x and y same as before
-          newCTM.e = this.getPan().x;
-          newCTM.f = this.getPan().y;
+          newCTM.e = getPan().x;
+          newCTM.f = getPan().y;
 
           preventPanX = preventPanY = true;
-        } else if (Utils.isObject(preventPan)) {
+        } else if (preventPan is Map) {
           // Check for X axes attribute
-          if (preventPan.x == false) {
+          if (preventPan['x'] == false) {
             // Prevent panning on x axes
-            newCTM.e = this.getPan().x;
+            newCTM.e = getPan().x;
             preventPanX = true;
-          } else if (Utils.isNumber(preventPan.x)) {
+          } else if (preventPan['x'] is num) {
             // Set a custom pan value
-            newCTM.e = preventPan.x;
+            newCTM.e = preventPan['x'];
           }
 
           // Check for Y axes attribute
-          if (preventPan.y == false) {
+          if (preventPan['y'] == false) {
             // Prevent panning on x axes
-            newCTM.f = this.getPan().y;
+            newCTM.f = getPan().y;
             preventPanY = true;
-          } else if (Utils.isNumber(preventPan.y)) {
+          } else if (preventPan['y'] is num) {
             // Set a custom pan value
-            newCTM.f = preventPan.y;
+            newCTM.f = preventPan['y'];
           }
         }
 
@@ -276,61 +260,60 @@ class ShadowViewport {
 
       // Check again if should zoom or pan
       if (willZoom || willPan) {
-        this.updateCache(newCTM);
+        updateCache(newCTM);
 
-        this.updateCTMOnNextFrame();
+        updateCTMOnNextFrame();
 
         // After callbacks
-        if (willZoom) {this.options.onZoom(this.getRelativeZoom());}
-        if (willPan) {this.options.onPan(this.getPan());}
+        if (willZoom) {
+          options.onZoom(getRelativeZoom());
+        }
+        if (willPan) {
+          options.onPan(getPan());
+        }
       }
     }
   }
 
-  isZoomDifferent(newCTM) {
-    return this.activeState.zoom != newCTM.a;
+  bool isZoomDifferent(Matrix newCTM) {
+    return activeState.zoom != newCTM.a;
   }
 
-  isPanDifferent(newCTM) {
-    return this.activeState.x != newCTM.e || this.activeState.y != newCTM.f;
+  bool isPanDifferent(Matrix newCTM) {
+    return activeState.x != newCTM.e || activeState.y != newCTM.f;
   }
 
 
-  /**
-   * Update cached CTM and active state
-   *
-   * @param {SVGMatrix} newCTM
-   */
-  updateCache(newCTM) {
-    this.activeState.zoom = newCTM.a;
-    this.activeState.x = newCTM.e;
-    this.activeState.y = newCTM.f;
+  /// Update cached CTM and active state
+  void updateCache(Matrix newCTM) {
+    var/*this.activeState.*/ zoom = newCTM.a;
+    var/*this.activeState.*/ x = newCTM.e;
+    var/*this.activeState.*/ y = newCTM.f;
+    activeState = new State(zoom: zoom, x: x, y: y);
   }
 
   var pendingUpdate = false;
 
-  /**
-   * Place a request to update CTM on next Frame
-   */
+  /// Place a request to update CTM on next Frame.
   updateCTMOnNextFrame() {
-    if (!this.pendingUpdate) {
+    if (!pendingUpdate) {
       // Lock
-      this.pendingUpdate = true;
+      pendingUpdate = true;
 
       // Throttle next update
-      this.requestAnimationFrame.call(window, this.updateCTMCached);
+      requestAnimationFrame(window, updateCTMCached);
     }
   }
 
-  /**
-   * Update viewport CTM with cached CTM
-   */
+  SvgElement defs;
+
+  /// Update viewport CTM with cached CTM.
   updateCTM() {
     // Updates SVG element
-    SvgUtils.setCTM(this.viewport, this.getCTM(), this.defs);
+    svgUtils.setCTM(this.viewport, getCTM(), defs);
 
     // Free the lock
-    this.pendingUpdate = false;
+    pendingUpdate = false;
   }
 }
 

@@ -5,10 +5,11 @@ library svg_pan_zoom.internal;
 import 'dart:math' as math;
 import 'dart:html' hide Point;
 import 'dart:async';
-import 'dart:svg';
+import 'dart:svg' hide ImageElement;
 import 'shadow_viewport.dart';
 import 'svg_utils.dart' as svgUtils;
 import 'control_icons.dart' as controlIcons;
+import 'utils.dart' as utils;
 
 //var Wheel = require('./uniwheel')
 //, ControlIcons = require('./control-icons')
@@ -77,6 +78,7 @@ class SvgPanZoom {
   ShadowViewport viewport;
 
   Map eventListeners;
+  GElement controlIcons;
 
   SvgPanZoom(this.svg, [this.options]) {
 //    var that = this
@@ -102,35 +104,35 @@ class SvgPanZoom {
     height = boundingClientRectNormalized.height;
 
     // Init shadow viewport
-    viewport = new ShadowViewport(svgUtils.getOrCreateViewport(svg, options.viewportSelector), {
-      'svg': svg,
-      'width': width,
-      'height': height,
-      'fit': options.fit,
-      'center': options.center,
-      'refreshRate': options.refreshRate,
+    viewport = new ShadowViewport(svgUtils.getOrCreateViewport(svg, options.viewportSelector), new ViewportOptions()
+      ..svg = svg
+      ..width = width
+      ..height = height
+      ..fit = options.fit
+      ..center = options.center
+      ..refreshRate = options.refreshRate
       // Put callbacks into functions as they can change through time
-      'beforeZoom': (oldScale, newScale) {
+      ..beforeZoom = (oldScale, newScale) {
         if (viewport != null && options.beforeZoom != null) {
           return options.beforeZoom(oldScale, newScale);
         }
-      },
-      'onZoom': (scale) {
+      }
+      ..onZoom = (scale) {
         if (viewport != null && options.onZoom != null) {
           return options.onZoom(scale);
         }
-      },
-      'beforePan': (oldPoint, newPoint) {
+      }
+      ..beforePan = (oldPoint, newPoint) {
         if (viewport != null && options.beforePan != null) {
           return options.beforePan(oldPoint, newPoint);
         }
-      },
-      'onPan': (point) {
+      }
+      ..onPan = (point) {
         if (viewport != null && options.onPan != null) {
           return options.onPan(point);
         }
       }
-    });
+    );
 
     // Wrap callbacks into public API context
     var publicInstance = getPublicInstance();
@@ -158,9 +160,9 @@ class SvgPanZoom {
         return handleMouseDown(evt, null);
       },
       'touchstart': (evt) {
-        var result = handleMouseDown(evt, prevEvt);
+        /*var result =*/ handleMouseDown(evt, prevEvt);
         prevEvt = evt;
-        return result;
+        return;// result;
       },
 
       // Mouse up group
@@ -386,7 +388,8 @@ class SvgPanZoom {
 
   /// Set pan to initial state.
   resetPan() {
-    pan(viewport.getOriginalState());
+    final s = viewport.getOriginalState();
+    pan(new math.Point(s.x, s.y));
   }
 
   /// Set pan and zoom to initial state.
@@ -406,7 +409,11 @@ class SvgPanZoom {
 
     // Check if target was a control button
     if (options.controlIconsEnabled) {
-      String targetClass = evt.target.attributes['class'] || '';
+      String targetClass = '';
+      final t = evt.target;
+      if (t is Element) {
+        t.attributes['class'];
+      }
       if (targetClass.indexOf('svg-pan-zoom-control') > -1) {
         return false;
       }
@@ -436,10 +443,10 @@ class SvgPanZoom {
 //      evt.returnValue = false;
 //    }
 
-    Utils.mouseAndTouchNormalize(evt, svg);
+    //Utils.mouseAndTouchNormalize(evt, svg);
 
     // Double click detection; more consistent than ondblclick
-    if (options.dblClickZoomEnabled && Utils.isDblClick(evt, prevEvt)){
+    if (options.dblClickZoomEnabled && utils.isDblClick(evt, prevEvt)){
       handleDblClick(evt);
     } else {
       // Pan mode
@@ -913,16 +920,13 @@ class PublicSvgPanZoom {
   }
 }
 
-/**
- * Stores pairs of instances of SvgPanZoom and SVG
- * Each pair is represented by an object {svg: SVGSVGElement, instance: SvgPanZoom}
- *
- * @type {Array}
- */
-var instancesStore = [];
+/// Stores pairs of instances of SvgPanZoom and SVG.
+/// Each pair is represented by a map:
+///     {'svg': SVGSVGElement, 'instance': SvgPanZoom}
+final instancesStore = [];
 
-svgPanZoom(elementOrSelector, options) {
-  var svg = Utils.getSvg(elementOrSelector);
+PublicSvgPanZoom svgPanZoom(elementOrSelector, SvgPanZoomOptions options) {
+  var svg = utils.getSvg(elementOrSelector);
 
   if (svg == null) {
     return null;
@@ -935,9 +939,9 @@ svgPanZoom(elementOrSelector, options) {
     }
 
     // If instance not found - create one
-    instancesStore.push({
-      svg: svg
-    , instance: new SvgPanZoom(svg, options)
+    instancesStore.add({
+      'svg': svg,
+      'instance': new SvgPanZoom(svg, options)
     });
 
     // Return just pushed instance
