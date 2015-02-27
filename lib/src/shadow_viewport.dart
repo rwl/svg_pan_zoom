@@ -17,16 +17,22 @@ import 'utils.dart' as utils;
 
 class State {
   final num zoom, x, y;
+
   State({this.zoom, this.x, this.y});
+
   factory State.from(State s) {
     return new State(zoom: s.zoom, x: s.x, y: s.y);
   }
 }
 
+/// Return false to cancel zooming.
 typedef bool BeforeZoomFn(num scale, num ctm);
-typedef OnZoomFn(num scale);
-typedef bool BeforePanFn(math.Point oldPan, math.Point newPan);
-typedef OnPanFn(math.Point newPan);
+
+/// Return null to not modify panning. [Point.x] and [Point.y] may be null.
+typedef math.Point BeforePanFn(math.Point oldPan, math.Point newPan);
+
+typedef void OnZoomFn(num scale);
+typedef void OnPanFn(math.Point newPan);
 
 class ViewportOptions {
   SvgSvgElement svg;
@@ -232,31 +238,31 @@ class ShadowViewport {
         bool preventPanY = false;
 
         // If prevent pan is Boolean false
-        if (preventPan == false) {
+        if (preventPan == null) {
           // Set x and y same as before
           newCTM.e = getPan().x;
           newCTM.f = getPan().y;
 
           preventPanX = preventPanY = true;
-        } else if (preventPan is Map) {
+        } else {
           // Check for X axes attribute
-          if (preventPan['x'] == false) {
+          if (preventPan.x == null) {
             // Prevent panning on x axes
             newCTM.e = getPan().x;
             preventPanX = true;
-          } else if (preventPan['x'] is num) {
+          } else {
             // Set a custom pan value
-            newCTM.e = preventPan['x'];
+            newCTM.e = preventPan.x;
           }
 
           // Check for Y axes attribute
-          if (preventPan['y'] == false) {
+          if (preventPan.y == null) {
             // Prevent panning on x axes
             newCTM.f = getPan().y;
             preventPanY = true;
-          } else if (preventPan['y'] is num) {
+          } else  {
             // Set a custom pan value
-            newCTM.f = preventPan['y'];
+            newCTM.f = preventPan.y;
           }
         }
 
