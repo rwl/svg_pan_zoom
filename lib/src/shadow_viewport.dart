@@ -23,9 +23,9 @@ class State {
   }
 }
 
-typedef BeforeZoomFn(num scale, num ctm);
+typedef bool BeforeZoomFn(num scale, num ctm);
 typedef OnZoomFn(num scale);
-typedef BeforePanFn(math.Point oldPan, math.Point newPan);
+typedef bool BeforePanFn(math.Point oldPan, math.Point newPan);
 typedef OnPanFn(math.Point newPan);
 
 class ViewportOptions {

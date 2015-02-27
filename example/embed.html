@@ -28,12 +28,12 @@ main() {
   svgNode.style.height = 'inherit';
   document.querySelector('#container').append(svgNode);
 
-  svgPanZoom(svgNode, new SvgPanZoomOptions()
+  new SvgPanZoom(svgNode)
     ..zoomEnabled = true
-    ..zoomScaleSensitivity = 0.02
+    ..zoomSensitivity = 0.02
     ..minZoom = 1
     ..maxZoom = 3
-    ..controlIconsEnabled = true);
+    ..controlsEnabled = true;
 }
     </script>
   </body>
