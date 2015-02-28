@@ -86,9 +86,9 @@ class SvgPanZoom {
     _state = State.NONE;
 
     // Get dimensions
-    var boundingClientRectNormalized = svgUtils.getBoundingClientRectNormalized(_svg);
-    _width = boundingClientRectNormalized.width;
-    _height = boundingClientRectNormalized.height;
+    var boundingClientRect = _svg.getBoundingClientRect();
+    _width = boundingClientRect.width;
+    _height = boundingClientRect.height;
 
     // Init shadow viewport
     final viewportElem = svgUtils.getOrCreateViewport(_svg, viewportSelector);
@@ -262,7 +262,7 @@ class SvgPanZoom {
   /// Otherwise, zoomScale is treated as a multiplied (e.g. 1.10 would zoom
   /// in 10%);
   void _zoomAtPoint(num zoomScale, Point point, [bool zoomAbsolute=false]) {
-    final originalState = _viewport.getOriginalState();
+    final originalState = _viewport.originalState;
 
     if (!zoomAbsolute) {
       // Fit zoomScale in set bounds.
@@ -279,14 +279,14 @@ class SvgPanZoom {
       zoomScale = zoomScale/_getZoom();
     }
 
-    final oldCTM = _viewport.getCTM();
+    final oldCTM = _viewport.ctm;
     final relativePoint = point.matrixTransform(oldCTM.inverse());
     final modifier = _svg.createSvgMatrix().translate(relativePoint.x,
         relativePoint.y).scale(zoomScale).translate(-relativePoint.x, -relativePoint.y);
     final newCTM = oldCTM.multiply(modifier);
 
     if (newCTM.a != oldCTM.a) {
-      _viewport.setCTM(newCTM);
+      _viewport.ctm = newCTM;
     }
   }
 
@@ -324,27 +324,27 @@ class SvgPanZoom {
 
   /// Get zoom scale.
   num _getZoom() {
-    return _viewport.getZoom();
+    return _viewport.zoom;
   }
 
   /// Get zoom scale.
-  num get zoom => _viewport.getRelativeZoom();
+  num get zoom => _viewport.relativeZoom;
 
   /// Compute actual zoom from public zoom.
   num _computeFromRelativeZoom(num zoom) {
-    return zoom * _viewport.getOriginalState().zoom;
+    return zoom * _viewport.originalState.zoom;
   }
 
   /// Set zoom to initial state.
   resetZoom() {
-    var originalState = _viewport.getOriginalState();
+    var originalState = _viewport.originalState;
 
     _zoom(originalState.zoom, true);
   }
 
   /// Set pan to initial state.
   resetPan() {
-    final s = _viewport.getOriginalState();
+    final s = _viewport.originalState;
     panTo(s.x, s.y);
   }
 
@@ -399,7 +399,7 @@ class SvgPanZoom {
     } else {
       // Pan mode
       _state = State.PAN;
-      _firstEventCTM = this._viewport.getCTM();
+      _firstEventCTM = this._viewport.ctm;
       _stateOrigin = svgUtils.getEventPoint(evt, _svg).matrixTransform(_firstEventCTM.inverse());
     }
   }
@@ -413,7 +413,7 @@ class SvgPanZoom {
       var point = svgUtils.getEventPoint(evt, _svg).matrixTransform(this._firstEventCTM.inverse());
       var viewportCTM = _firstEventCTM.translate(point.x - _stateOrigin.x, point.y - _stateOrigin.y);
 
-      _viewport.setCTM(viewportCTM);
+      _viewport.ctm = viewportCTM;
     }
   }
 
@@ -430,7 +430,7 @@ class SvgPanZoom {
   /// Adjust viewport size (only) so it will fit in SVG.
   /// Does not center image.
   void fit() {
-    Rectangle viewBox = _viewport.getViewBox();
+    Rectangle viewBox = _viewport.viewBox;
     var newScale = math.min(_width/(viewBox.width - viewBox.left),
         _height/(viewBox.height - viewBox.top));
 
@@ -440,7 +440,7 @@ class SvgPanZoom {
   /// Adjust viewport pan (only) so it will be centered in SVG.
   /// Does not zoom/fit image.
   void center() {
-    Rectangle viewBox = _viewport.getViewBox();
+    Rectangle viewBox = _viewport.viewBox;
     var offsetX = (_width - (viewBox.width + viewBox.left) * _getZoom()) * 0.5;
     var offsetY = (_height - (viewBox.height + viewBox.top) * _getZoom()) * 0.5;
 
@@ -457,23 +457,23 @@ class SvgPanZoom {
 
   /// Pan to a rendered position.
   void panToPoint(math.Point point) {
-    var viewportCTM = _viewport.getCTM();
+    var viewportCTM = _viewport.ctm;
     viewportCTM.e = point.x;
     viewportCTM.f = point.y;
-    _viewport.setCTM(viewportCTM);
+    _viewport.ctm = viewportCTM;
   }
 
   /// Relatively pan the graph by a specified rendered position vector.
   void panBy(num x, num y) {
-    var viewportCTM = _viewport.getCTM();
+    var viewportCTM = _viewport.ctm;
     viewportCTM.e += x;
     viewportCTM.f += y;
-    _viewport.setCTM(viewportCTM);
+    _viewport.ctm = viewportCTM;
   }
 
   /// Get pan vector.
   math.Point get pan {
-    var state = _viewport.getState();
+    var state = _viewport.state;
 
     return new math.Point(state.x, state.y);
   }
@@ -481,9 +481,9 @@ class SvgPanZoom {
   /// Recalculates cached svg dimensions and controls position.
   void resize() {
     // Get dimensions.
-    var boundingClientRectNormalized = svgUtils.getBoundingClientRectNormalized(_svg);
-    _width = boundingClientRectNormalized.width;
-    _height = boundingClientRectNormalized.height;
+    var boundingClientRect = _svg.getBoundingClientRect();
+    _width = boundingClientRect.width;
+    _height = boundingClientRect.height;
 
     // Reposition control icons by re-enabling them.
     if (_controlIconsEnabled) {
@@ -566,5 +566,5 @@ class SvgPanZoom {
   num get width => _width;
   num get height => _height;
   num get realZoom => _getZoom();
-  Rectangle get viewBox => _viewport.getViewBox();
+  Rectangle get viewBox => _viewport.viewBox;
 }

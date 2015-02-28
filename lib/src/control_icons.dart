@@ -2,14 +2,7 @@
 // All rights reserved.
 part of svg_pan_zoom.internal;
 
-//var SvgUtils = require('./svg-utilities');
-
-//import 'dart:html';
-//import 'dart:svg';
-//import 'svg_pan_zoom.dart';
-//import 'svg_utils.dart' as svgUtils;
-
-_enableControls(SvgPanZoom instance) {
+void _enableControls(SvgPanZoom instance) {
   // Select (and create if necessary) defs
   var defs = instance._svg.querySelector('defs');
   if (defs == null) {
