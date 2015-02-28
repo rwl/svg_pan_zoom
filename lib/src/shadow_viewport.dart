@@ -28,8 +28,9 @@ class State {
 /// Return false to cancel zooming.
 typedef bool BeforeZoomFn(num scale, num ctm);
 
-/// Return null to not modify panning. [Point.x] and [Point.y] may be null.
-typedef math.Point BeforePanFn(math.Point oldPan, math.Point newPan);
+/// Return false to not modify panning. [Point.x] and [Point.y] may be null
+/// to prevent panning in a particular direction.
+typedef dynamic BeforePanFn(math.Point oldPan, math.Point newPan);
 
 typedef void OnZoomFn(num scale);
 typedef void OnPanFn(math.Point newPan);
@@ -238,13 +239,13 @@ class ShadowViewport {
         bool preventPanY = false;
 
         // If prevent pan is Boolean false
-        if (preventPan == null) {
+        if (preventPan == false) {
           // Set x and y same as before
           newCTM.e = getPan().x;
           newCTM.f = getPan().y;
 
           preventPanX = preventPanY = true;
-        } else {
+        } else if (preventPan is math.Point) {
           // Check for X axes attribute
           if (preventPan.x == null) {
             // Prevent panning on x axes
