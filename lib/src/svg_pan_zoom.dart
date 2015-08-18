@@ -18,9 +18,7 @@ abstract class CustomEventsHandler {
   destroy(SvgSvgElement svg, SvgPanZoom spz);
 }
 
-enum State {
-  NONE, PAN
-}
+enum State { NONE, PAN }
 
 class SvgPanZoom {
   final SvgSvgElement _svg;
@@ -62,13 +60,16 @@ class SvgPanZoom {
 
   factory SvgPanZoom.selector(String selector,
       {viewportSelector: '.svg-pan-zoom_viewport', bool fit: true,
-        bool center: true, refreshRate: 'auto'}) {
+      bool center: true, refreshRate: 'auto'}) {
     final svg = document.querySelector(selector);
     if (svg is! SvgSvgElement) {
       throw new ArgumentError.value(selector, 'selector');
     }
-    return new SvgPanZoom(svg, viewportSelector: viewportSelector, fit: fit,
-        center: center, refreshRate: refreshRate);
+    return new SvgPanZoom(svg,
+        viewportSelector: viewportSelector,
+        fit: fit,
+        center: center,
+        refreshRate: refreshRate);
   }
 
   /// [viewportSelector] can be querySelector string or SVGElement. Enable
@@ -119,8 +120,7 @@ class SvgPanZoom {
         if (_viewport != null && onPan != null) {
           return onPan(point);
         }
-      }
-    );
+      });
 
     if (_controlIconsEnabled) {
       _enableControls(this);
@@ -233,9 +233,9 @@ class SvgPanZoom {
       // Make empirical adjustments for browsers that give deltaY in
       // pixels (deltaMode=0).
 
-      if (evt.wheelDeltaY != 0) {
+      if (evt.deltaY != 0) {
         // Normalizer for Chrome.
-        delta = evt.deltaY / (evt.wheelDeltaY/3).abs();
+        delta = evt.deltaY / (evt.deltaY / 3).abs();
       } else {
         // Others. Possibly tablets? Use a value just in case.
         delta = evt.deltaY / 120;
@@ -247,8 +247,8 @@ class SvgPanZoom {
     }
 
     final inversedScreenCTM = _svg.getScreenCtm().inverse();
-    final relativeMousePoint = svgUtils.getEventPoint(evt,
-        _svg).matrixTransform(inversedScreenCTM);
+    final relativeMousePoint =
+        svgUtils.getEventPoint(evt, _svg).matrixTransform(inversedScreenCTM);
     // Multiplying by neg. 1 so as to make zoom in/out behavior match
     // Google maps behavior.
     final zoom = math.pow(1 + zoomSensitivity, -1 * delta);
@@ -261,7 +261,7 @@ class SvgPanZoom {
   /// If [zoomAbsolute] is true, zoomScale is treated as an absolute value.
   /// Otherwise, zoomScale is treated as a multiplied (e.g. 1.10 would zoom
   /// in 10%);
-  void _zoomAtPoint(num zoomScale, Point point, [bool zoomAbsolute=false]) {
+  void _zoomAtPoint(num zoomScale, Point point, [bool zoomAbsolute = false]) {
     final originalState = _viewport.originalState;
 
     if (!zoomAbsolute) {
@@ -276,13 +276,16 @@ class SvgPanZoom {
       zoomScale = math.max(minZoom * originalState.zoom,
           math.min(maxZoom * originalState.zoom, zoomScale));
       // Find relative scale to achieve desired scale.
-      zoomScale = zoomScale/_getZoom();
+      zoomScale = zoomScale / _getZoom();
     }
 
     final oldCTM = _viewport.ctm;
     final relativePoint = point.matrixTransform(oldCTM.inverse());
-    final modifier = _svg.createSvgMatrix().translate(relativePoint.x,
-        relativePoint.y).scale(zoomScale).translate(-relativePoint.x, -relativePoint.y);
+    final modifier = _svg
+        .createSvgMatrix()
+        .translate(relativePoint.x, relativePoint.y)
+        .scale(zoomScale)
+        .translate(-relativePoint.x, -relativePoint.y);
     final newCTM = oldCTM.multiply(modifier);
 
     if (newCTM.a != oldCTM.a) {
@@ -300,7 +303,7 @@ class SvgPanZoom {
   /// [absolute] marks zoom scale as relative or absolute
   void set zoom(num scale) => _centerZoom(scale);
 
-  void _centerZoom(num scale, [bool absolute=true]) {
+  void _centerZoom(num scale, [bool absolute = true]) {
     if (absolute) {
       scale = _computeFromRelativeZoom(scale);
     }
@@ -311,7 +314,7 @@ class SvgPanZoom {
   /// Zoom by [scale] at [point].
   ///
   /// [absolute] marks zoom scale as relative or absolute.
-  zoomAtPoint(num scale, math.Point point, [bool absolute=true]) {
+  zoomAtPoint(num scale, math.Point point, [bool absolute = true]) {
     if (absolute) {
       // Transform zoom into a relative value
       scale = _computeFromRelativeZoom(scale);
@@ -357,7 +360,7 @@ class SvgPanZoom {
   /// Handle double click event.
   /// See [_handleMouseDown] for alternate detection method.
   _handleDblClick(MouseEvent evt) {
-      evt.preventDefault();
+    evt.preventDefault();
 
     // Check if target was a control button.
     if (_controlIconsEnabled) {
@@ -375,12 +378,14 @@ class SvgPanZoom {
 
     if (evt.shiftKey) {
       // Zoom out when shift key pressed.
-      zoomFactor = 1/((1 + zoomSensitivity) * 2);
+      zoomFactor = 1 / ((1 + zoomSensitivity) * 2);
     } else {
       zoomFactor = (1 + zoomSensitivity) * 2;
     }
 
-    var point = svgUtils.getEventPoint(evt, _svg).matrixTransform(_svg.getScreenCtm().inverse());
+    var point = svgUtils
+        .getEventPoint(evt, _svg)
+        .matrixTransform(_svg.getScreenCtm().inverse());
     _zoomAtPoint(zoomFactor, point);
   }
 
@@ -389,29 +394,34 @@ class SvgPanZoom {
 
   /// Handle click event.
   void _handleMouseDown(MouseEvent evt, prevEvt) {
-      evt.preventDefault();
+    evt.preventDefault();
 
     //Utils.mouseAndTouchNormalize(evt, svg);
 
     // Double click detection; more consistent than ondblclick
-    if (dblClickZoomEnabled && utils.isDblClick(evt, prevEvt)){
+    if (dblClickZoomEnabled && utils.isDblClick(evt, prevEvt)) {
       _handleDblClick(evt);
     } else {
       // Pan mode
       _state = State.PAN;
       _firstEventCTM = this._viewport.ctm;
-      _stateOrigin = svgUtils.getEventPoint(evt, _svg).matrixTransform(_firstEventCTM.inverse());
+      _stateOrigin = svgUtils
+          .getEventPoint(evt, _svg)
+          .matrixTransform(_firstEventCTM.inverse());
     }
   }
 
   /// Handle mouse move event
   void _handleMouseMove(MouseEvent evt) {
-      evt.preventDefault();
+    evt.preventDefault();
 
     if (_state == State.PAN && panEnabled) {
       // Pan mode
-      var point = svgUtils.getEventPoint(evt, _svg).matrixTransform(this._firstEventCTM.inverse());
-      var viewportCTM = _firstEventCTM.translate(point.x - _stateOrigin.x, point.y - _stateOrigin.y);
+      var point = svgUtils
+          .getEventPoint(evt, _svg)
+          .matrixTransform(this._firstEventCTM.inverse());
+      var viewportCTM = _firstEventCTM.translate(
+          point.x - _stateOrigin.x, point.y - _stateOrigin.y);
 
       _viewport.ctm = viewportCTM;
     }
@@ -419,7 +429,7 @@ class SvgPanZoom {
 
   /// Handle mouse button release event
   void _handleMouseUp(MouseEvent evt) {
-      evt.preventDefault();
+    evt.preventDefault();
 
     if (_state == State.PAN) {
       // Quit pan mode.
@@ -431,8 +441,8 @@ class SvgPanZoom {
   /// Does not center image.
   void fit() {
     Rectangle viewBox = _viewport.viewBox;
-    var newScale = math.min(_width/(viewBox.width - viewBox.left),
-        _height/(viewBox.height - viewBox.top));
+    var newScale = math.min(_width / (viewBox.width - viewBox.left),
+        _height / (viewBox.height - viewBox.top));
 
     _zoom(newScale, true);
   }
@@ -491,7 +501,6 @@ class SvgPanZoom {
       controlsEnabled = true;
     }
   }
-
 
   /// Unbind mouse events and free callbacks.
   destroy() {
