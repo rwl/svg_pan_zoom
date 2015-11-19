@@ -3,5 +3,7 @@ version: 0.0.3
 author: Richard Lincoln <r.w.lincoln@gmail.com>
 description: Enables panning and zooming of SVG in an HTML document.
 homepage: https://github.com/rwl/svg_pan_zoom
+dependencies:
+  browser: any
 dev_dependencies:
-  unittest: '>=0.11.5+4 <0.12.0'
+  test: any

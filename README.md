@@ -1,9 +1,9 @@
 # svg_pan_zoom
 
-A Dart library for panning and zooming of SVG images in HTML documents.
+A library for panning and zooming of SVG images in HTML documents.
 
-Based on [svg-pan-zoom](https://github.com/ariutta/svg-pan-zoom) by Anders
-Riutta.
+An interface to [svg-pan-zoom](https://github.com/ariutta/svg-pan-zoom) by
+Anders Riutta.
 
 ## Usage
 

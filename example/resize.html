@@ -12,21 +12,22 @@
         </g>
       </svg>
     </div>
+    <script src="packages/svg_pan_zoom/svg-pan-zoom.js"></script>
     <script type="application/dart">
-import 'dart:html';
-import 'package:svg_pan_zoom/svg_pan_zoom.dart';
+      import 'dart:html';
+      import 'package:svg_pan_zoom/svg_pan_zoom.dart';
 
-main() {
-  SvgPanZoom panZoom = new SvgPanZoom.selector('#demo-svg', fit: true, center: true)
-    ..zoomEnabled = true
-    ..controlsEnabled = true;
+      main() {
+        var panZoom = new SvgPanZoom.selector('#demo-svg', fit: true, center: true)
+          ..zoomEnabled = true
+          ..controlsEnabled = true;
 
-  window.onResize.listen((_) {
-    panZoom.resize();
-    panZoom.fit();
-    panZoom.center();
-  });
-}
+        window.onResize.listen((_) {
+          panZoom.resize();
+          panZoom.fit();
+          panZoom.center();
+        });
+      }
     </script>
   </body>
 </html>

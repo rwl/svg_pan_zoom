@@ -20,34 +20,35 @@
         </g>
       </svg>
     </div>
+    <script src="packages/svg_pan_zoom/svg-pan-zoom.js"></script>
     <script type="application/dart">
-import 'dart:math';
-import 'package:svg_pan_zoom/svg_pan_zoom.dart';
+      import 'dart:math';
+      import 'package:svg_pan_zoom/svg_pan_zoom.dart';
 
-main() {
-  SvgPanZoom panZoom = new SvgPanZoom.selector('#limit-svg',
-      fit: true, center: true)
-    ..zoomEnabled = true
-    ..controlsEnabled = true;
+      main() {
+        var panZoom = new SvgPanZoom.selector('#limit-svg',
+            fit: true, center: true)
+          ..zoomEnabled = true
+          ..controlsEnabled = true;
 
-  var gutterWidth = 100;
-  var gutterHeight = 100;
+        var gutterWidth = 100;
+        var gutterHeight = 100;
 
-  panZoom.beforePan = (Point oldPan, Point newPan) {
-    var vb = panZoom.viewBox;
-    var zoom = panZoom.realZoom;
+        panZoom.beforePan = (Pan oldPan, Pan newPan) {
+          var vb = panZoom.viewBox();
+          var zoom = panZoom.realZoom();
 
-    var leftLimit = -((vb.left + vb.width) * zoom) + gutterWidth;
-    var rightLimit = panZoom.width - gutterWidth - (vb.left * zoom);
-    var topLimit = -((vb.top + vb.height) * zoom) + gutterHeight;
-    var bottomLimit = panZoom.height - gutterHeight - (vb.top * zoom);
+          var leftLimit = -((vb.left + vb.width) * zoom) + gutterWidth;
+          var rightLimit = panZoom.width - gutterWidth - (vb.left * zoom);
+          var topLimit = -((vb.top + vb.height) * zoom) + gutterHeight;
+          var bottomLimit = panZoom.height - gutterHeight - (vb.top * zoom);
 
-    return new Point(
-        max(leftLimit, min(rightLimit, newPan.x)),
-        max(topLimit, min(bottomLimit, newPan.y))
-    );
-  };
-}
+          return new Point(
+              max(leftLimit, min(rightLimit, newPan.x)),
+              max(topLimit, min(bottomLimit, newPan.y))
+          );
+        };
+      }
     </script>
   </body>
 </html>
