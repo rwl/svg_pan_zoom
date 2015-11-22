@@ -7,10 +7,12 @@ Anders Riutta.
 
 ## Usage
 
-    import 'package:svg_pan_zoom/svg_pan_zoom.dart';
+```dart
+import 'package:svg_pan_zoom/svg_pan_zoom.dart';
 
-    main() {
-      var panZoom = new SvgPanZoom.selector('#svg', fit: true, center: true)
-        ..zoomEnabled = true
-        ..controlsEnabled = true;
-    }
+main() {
+  var panZoom = new SvgPanZoom.selector('#svg', fit: true, center: true)
+    ..zoomEnabled = true
+    ..controlsEnabled = true;
+}
+```
